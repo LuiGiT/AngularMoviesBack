@@ -1,4 +1,5 @@
 ﻿using BackEndGeneros.Validaciones;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace BackEndGeneros.Entidades
@@ -11,5 +12,6 @@ namespace BackEndGeneros.Entidades
         [StringLength(maximumLength: 50)]
         [PrimeraLetraMayuscula]
         public string Nombre { get; set; }
+        public List<PeliculasGeneros> PeliculasGeneros { get; set; }
     }
 }
