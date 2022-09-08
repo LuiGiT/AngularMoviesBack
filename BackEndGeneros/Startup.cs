@@ -1,4 +1,5 @@
 using AutoMapper;
+using BackEndGeneros.Utilidades;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,10 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+
 
 namespace BackEndGeneros
 {
@@ -30,8 +34,26 @@ namespace BackEndGeneros
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAutoMapper(typeof(Startup));
-            services.AddDbContext<ApplicationDbContext>(options => 
-            options.UseSqlServer(Configuration.GetConnectionString("defaultConnection")));
+
+            services.AddSingleton(provider =>
+
+                new MapperConfiguration(config =>
+                {
+                    var geometryFactory = provider.GetRequiredService<GeometryFactory>();
+                    config.AddProfile(new AutoMapperProfiles(geometryFactory));
+
+                }).CreateMapper());
+
+            services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
+
+
+            services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+
+            services.AddHttpContextAccessor();
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(Configuration.GetConnectionString("defaultConnection"),
+            sqlServer => sqlServer.UseNetTopologySuite()));
 
             services.AddCors(options => {
                 var frontendUrl = Configuration.GetValue<string>("frontend_url");
@@ -60,6 +82,8 @@ namespace BackEndGeneros
             }
 
             app.UseHttpsRedirection();
+
+            app.UseStaticFiles();
 
             app.UseRouting();
 
