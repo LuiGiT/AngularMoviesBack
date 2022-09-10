@@ -92,5 +92,13 @@ namespace BackEndGeneros.Controllers
             return NoContent();
         }
 
+        [HttpGet("todos")]
+        public async Task<ActionResult<List<GeneroDTO>>> Todos()
+        {
+            var generos = await _context.Generos.ToListAsync();
+            return _mapper.Map<List<GeneroDTO>>(generos);
+        }
+
+
     }
 }
