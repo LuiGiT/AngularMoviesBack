@@ -1,12 +1,17 @@
 ﻿using AutoMapper;
 using BackEndGeneros.DTOs;
+using BackEndGeneros.Utilidades;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,6 +41,34 @@ namespace BackEndGeneros.Controllers
             this._signInManager = signInManager;
             this._context = context;
             this._mapper = mapper;
+        }
+
+        [HttpGet("listadoUsuarios")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+        public async Task<ActionResult<List<UsuarioDTO>>> ListadoUsuarios([FromQuery] PaginacionDTO paginacionDTO)
+        {
+            var queryable = _context.Users.AsQueryable();
+            await HttpContext.InsertarParametrosPaginacionEnCabecera(queryable);
+            var usuarios = await queryable.OrderBy(x => x.Email).Paginar(paginacionDTO).ToListAsync();
+            return _mapper.Map<List<UsuarioDTO>>(usuarios);
+        }
+
+        [HttpPost("HacerAdmin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+        public async Task<ActionResult> HacerAdmin([FromBody] string usuarioId)
+        {
+            var usuario = await _userManager.FindByIdAsync(usuarioId);
+            await _userManager.AddClaimAsync(usuario, new Claim("role", "admin"));
+            return NoContent();
+        }
+
+        [HttpPost("RemoverAdmin")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
+        public async Task<ActionResult> RemoverAdmin([FromBody] string usuarioId)
+        {
+            var usuario = await _userManager.FindByIdAsync(usuarioId);
+            await _userManager.RemoveClaimAsync(usuario, new Claim("role", "admin"));
+            return NoContent();
         }
 
         [HttpPost("crear")]

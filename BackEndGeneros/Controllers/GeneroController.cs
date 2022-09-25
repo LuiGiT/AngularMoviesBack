@@ -2,10 +2,11 @@
 using BackEndGeneros.DTOs;
 using BackEndGeneros.Entidades;
 using BackEndGeneros.Utilidades;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace BackEndGeneros.Controllers
 {
     [Route("api/generos")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "EsAdmin")]
     public class GeneroController : ControllerBase
     {
         private readonly ILogger<GeneroController> _logger;
@@ -93,6 +95,7 @@ namespace BackEndGeneros.Controllers
         }
 
         [HttpGet("todos")]
+        [AllowAnonymous]
         public async Task<ActionResult<List<GeneroDTO>>> Todos()
         {
             var generos = await _context.Generos.ToListAsync();

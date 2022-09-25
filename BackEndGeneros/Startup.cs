@@ -17,6 +17,7 @@ using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,6 +29,8 @@ namespace BackEndGeneros
     {
         public Startup(IConfiguration configuration)
         {
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
             Configuration = configuration;
         }
 
@@ -48,7 +51,6 @@ namespace BackEndGeneros
                 }).CreateMapper());
 
             services.AddSingleton<GeometryFactory>(NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
-
 
             services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
 
@@ -84,6 +86,10 @@ namespace BackEndGeneros
                     ClockSkew = TimeSpan.Zero
                 });
 
+            services.AddAuthorization(opciones =>
+            {
+                opciones.AddPolicy("EsAdmin", policy => policy.RequireClaim("role", "admin"));
+            });
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
